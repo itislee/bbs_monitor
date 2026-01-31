@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BBS Monitor - 匹配结果</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      min-width: 500px;
+    }
+    h1 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .result-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .result-item:hover {
+      background-color: #f5f5f5;
+    }
+    .result-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .result-url {
+      font-size: 12px;
+      color: #666;
+      word-break: break-all;
+    }
+    .result-keyword {
+      display: inline-block;
+      background-color: #ffeb3b;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .result-time {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+    .empty-results {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>BBS监控 - 匹配结果</h1>
+  <div id="results-container">
+    <div class="empty-results">暂无匹配结果</div>
+  </div>
+
+  <script src="results.js"></script>
+</body>
+</html>

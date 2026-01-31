@@ -39,40 +39,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // 打开最近匹配的URL
-  const openMatchedUrlButton = document.getElementById('openMatchedUrl');
-  openMatchedUrlButton.addEventListener('click', async function() {
-    // 获取所有已通知的帖子，因为这是最新找到的包含关键字的链接
-    const result = await chrome.storage.local.get(['notifiedPosts', 'notificationCount']);
-    const notifiedPosts = result.notifiedPosts || {};
-    let notificationCount = result.notificationCount || 0;
-    
-    // 将notifiedPosts转换为数组并按时间戳排序，找到最新的
-    const notifiedPostArray = Object.values(notifiedPosts);
-    if (notifiedPostArray.length > 0) {
-      // 按时间戳降序排列，获取最新的通知
-      const latestNotifiedPost = notifiedPostArray.sort((a, b) => b.timestamp - a.timestamp)[0];
-      
-      if (latestNotifiedPost) {
-        // 打开匹配的URL
-        await chrome.tabs.create({ url: latestNotifiedPost.url });
-        
-        // 减少通知计数，但不低于0
-        if (notificationCount > 0) {
-          notificationCount--;
-        }
-        await chrome.storage.local.set({ notificationCount: notificationCount });
-        
-        // 更新徽章
-        chrome.action.setBadgeText({ text: notificationCount.toString() });
-        
-        window.close(); // 关闭popup窗口
-      } else {
-        alert('没有找到匹配的URL');
-      }
-    } else {
-      alert('没有扫描结果');
-    }
+  // 打开结果页面
+  const openResultsButton = document.getElementById('openResults');
+  openResultsButton.addEventListener('click', function() {
+    // 打开结果页面
+    chrome.tabs.create({ url: chrome.runtime.getURL('results.html') });
+    window.close(); // 关闭popup窗口
   });
 
   function updatePopupInfo() {

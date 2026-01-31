@@ -24,5 +24,11 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "BBS Monitor Options"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["results.html", "results.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
