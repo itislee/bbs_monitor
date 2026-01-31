@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener(() => {
     keywords: ['apple'],
     checkInterval: 10
   });
-  
+
   chrome.storage.local.set({
     notifiedPosts: {},
     monitoringEnabled: true,
@@ -44,13 +44,13 @@ init();
 function init() {
   // 获取初始设置
   updateSettings();
-  
+
   // 恢复监控状态
   chrome.storage.local.get(['monitoringEnabled'], (result) => {
     monitoringEnabled = result.monitoringEnabled !== false;
     updateMonitoringState();
   });
-  
+
   // 每分钟检查一次，看是否有新内容
   checkIntervalId = setInterval(checkAllMonitoredUrls, 60000);
 }
@@ -75,7 +75,7 @@ function updateMonitoringState() {
     clearInterval(checkIntervalId);
     checkIntervalId = null;
   }
-  
+
   // 如果启用监控，则设置新的定时器
   if (monitoringEnabled) {
     checkIntervalId = setInterval(checkAllMonitoredUrls, checkInterval);
@@ -84,7 +84,7 @@ function updateMonitoringState() {
 
 async function checkAllMonitoredUrls() {
   if (!monitoringEnabled) return;
-  
+
   chrome.storage.sync.get({
     monitoredUrls: []
   }, async (items) => {
@@ -107,11 +107,11 @@ async function checkSingleUrl(url) {
         'User-Agent': 'Mozilla/5.0 (compatible; BBS Monitor Extension)'
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    
+
     const html = await response.text();
     await checkPageContent(url, '', html);
   } catch (error) {
@@ -151,26 +151,31 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
     const keywords = items.keywords;
     if (!keywords || keywords.length === 0) return;
     
-    let textContent = '';
+    let pageHtml = '';
     
     if (contentFromTab) {
       // 如果有从内容脚本传来的页面内容，优先使用
-      textContent = contentFromTab;
+      pageHtml = contentFromTab;
     } else {
-      // 否则从HTML中提取文本内容
-      // 在background环境中，使用正则表达式来移除HTML标签
-      textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      // 否则使用获取到的HTML
+      pageHtml = html;
     }
     
     // 检查页面内容中是否包含关键字
     const foundKeywords = [];
     for (const keyword of keywords) {
-      if (textContent.toLowerCase().includes(keyword.toLowerCase())) {
+      if (pageHtml.toLowerCase().includes(keyword.toLowerCase())) {
         foundKeywords.push(keyword);
+        
+        // 尝试找到包含关键字的链接
+        const linksWithKeyword = findLinksContainingKeyword(pageHtml, keyword, url);
+        
+        // 如果找到包含关键字的链接，使用该链接；否则使用页面URL
+        const targetUrl = linksWithKeyword.length > 0 ? linksWithKeyword[0] : url;
         
         const post = {
           title: title || `Keyword "${keyword}" found on page`,
-          url: url,
+          url: targetUrl,
           keyword: keyword,
           timestamp: Date.now()
         };
@@ -186,12 +191,12 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         timestamp: Date.now(),
         foundKeywords: foundKeywords,
         totalKeywords: keywords.length,
-        contentLength: textContent.length
+        contentLength: pageHtml.length
       };
       
       // 获取之前的扫描结果并添加新的结果
       const prevResults = await chrome.storage.local.get(['recentScanResults']);
-      const recentResults = prevResults.recentScanResults || [];
+      const recentResults = prevResults.recentScanResults || [];      
       
       // 保留最近的10次扫描结果
       recentResults.push(scanResult);
@@ -204,9 +209,38 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
   });
 }
 
+// 辅助函数：查找包含关键字的链接
+function findLinksContainingKeyword(html, keyword, baseUrl) {
+  // 使用正则表达式查找包含关键字的链接
+  const linkRegex = /<a\s+[^>]*href\s*=\s*["']([^"']*)["'][^>]*>(.*?)<\/a>/gi;
+  const links = [];
+  let match;
+  
+  while ((match = linkRegex.exec(html)) !== null) {
+    const href = match[1];
+    const linkText = match[2];
+    
+    // 检查链接文本或href是否包含关键字
+    if (linkText.toLowerCase().includes(keyword.toLowerCase()) ||
+        href.toLowerCase().includes(keyword.toLowerCase())) {
+      
+      // 处理相对链接
+      try {
+        const fullUrl = new URL(href, baseUrl).href;
+        links.push(fullUrl);
+      } catch (e) {
+        // 如果URL无效，跳过
+        console.warn('Invalid URL found:', href);
+      }
+    }
+  }
+  
+  return links;
+}
+
 function findMatchingPosts(content, keywords, baseUrl) {
   const posts = [];
-  
+
   // 根据常见BBS结构查找帖子
   // 这里使用正则表达式匹配常见的帖子结构
   const postPatterns = [
@@ -215,18 +249,18 @@ function findMatchingPosts(content, keywords, baseUrl) {
     /<a[^>]*href=['"]([^'"]*viewtopic[^'"]*)['"][^>]*>([^<]*)<\/a>/gi, // 包含viewtopic的链接
     /<div[^>]*class=["'].*thread.*["'][^>]*>[\s\S]*?<a[^>]*href=['"]([^'"]*)['"][^>]*>([^<]*)<\/a>/gi, // 带thread类的div
   ];
-  
+
   for (const pattern of postPatterns) {
     let match;
     while ((match = pattern.exec(content)) !== null) {
       const postUrl = match[1];
       const postTitle = match[2];
-      
+
       // 检查标题是否包含关键字
       for (const keyword of keywords) {
         if (postTitle.toLowerCase().includes(keyword.toLowerCase())) {
           const fullPostUrl = new URL(postUrl, baseUrl).href;
-          
+
           posts.push({
             title: postTitle,
             url: fullPostUrl,
@@ -238,7 +272,7 @@ function findMatchingPosts(content, keywords, baseUrl) {
       }
     }
   }
-  
+
   // 也检查所有文本内容中是否包含关键字
   for (const keyword of keywords) {
     const regex = new RegExp(keyword, 'gi');
@@ -249,7 +283,7 @@ function findMatchingPosts(content, keywords, baseUrl) {
       break; // 避免太多假匹配
     }
   }
-  
+
   return posts;
 }
 
@@ -258,16 +292,16 @@ async function notifyIfNew(post) {
   const result = await chrome.storage.local.get(['notifiedPosts', 'notificationCount']);
   const notifiedPosts = result.notifiedPosts || {};
   let notificationCount = result.notificationCount || 0;
-  
+
   // 生成帖子的唯一标识符
   const postId = `${post.url}-${post.keyword}`;
-  
+
   // 检查是否已经通知过
   if (notifiedPosts[postId]) {
     console.log(`Already notified about keyword "${post.keyword}" on page:`, post.url);
     return; // 已经通知过，不再重复
   }
-  
+
   // 标记为已通知
   notifiedPosts[postId] = {
     timestamp: Date.now(),
@@ -275,17 +309,17 @@ async function notifyIfNew(post) {
     url: post.url,
     keyword: post.keyword
   };
-  
+
   // 增加通知计数
   notificationCount++;
-  
-  await chrome.storage.local.set({ 
+
+  await chrome.storage.local.set({
     notifiedPosts,
     notificationCount
   });
-  
+
   console.log(`Found keyword "${post.keyword}" on page:`, post.url);
-  
+
   // 尝试创建通知，但如果失败也不影响其他功能
   try {
     chrome.action.setBadgeText({ text: notificationCount.toString() });
