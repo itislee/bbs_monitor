@@ -1,0 +1,20 @@
+{
+  "name": "web-monitor-extension",
+  "version": "1.0.0",
+  "description": "A Chrome extension to monitor web pages for keyword changes and updates",
+  "main": "background.js",
+  "scripts": {
+    "build": "echo 'Building Web Monitor extension'",
+    "test": "echo 'Testing Web Monitor extension'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "web-monitor",
+    "keyword-monitor",
+    "content-monitor",
+    "notifications"
+  ],
+  "author": "OpenClaw Assistant",
+  "license": "MIT",
+  "devDependencies": {}
+}

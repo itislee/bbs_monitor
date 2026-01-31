@@ -1,0 +1,2 @@
+This is a placeholder for icon128.png. 
+You need to add an actual 128x128 pixel PNG image file for the extension icon.
