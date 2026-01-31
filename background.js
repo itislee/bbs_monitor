@@ -158,9 +158,8 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       textContent = contentFromTab;
     } else {
       // 否则从HTML中提取文本内容
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-      textContent = tempDiv.innerText || tempDiv.textContent || '';
+      // 在background环境中，使用正则表达式来移除HTML标签
+      textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     }
     
     // 检查页面内容中是否包含关键字
