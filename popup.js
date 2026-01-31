@@ -17,6 +17,26 @@ document.addEventListener('DOMContentLoaded', function() {
   // 获取当前监控状态和相关信息
   updatePopupInfo();
 
+  // 检查徽章计数并在启动时决定显示哪个页面
+  chrome.action.getBadgeText({}, function(badgeText) {
+    const notificationCountNum = parseInt(badgeText) || 0;
+    if (notificationCountNum > 0) {
+      // 如果有通知，直接显示结果页面
+      statusPage.style.display = 'none';
+      resultsPage.style.display = 'block';
+      goBackButton.style.display = 'block';
+      loadResults();
+      
+      // 清空徽章数字
+      chrome.action.setBadgeText({ text: '' });
+    } else {
+      // 否则显示状态页面
+      statusPage.style.display = 'block';
+      resultsPage.style.display = 'none';
+      goBackButton.style.display = 'none';
+    }
+  });
+
   // 切换到结果页面
   showResultsButton.addEventListener('click', async function() {
     statusPage.style.display = 'none';
