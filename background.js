@@ -156,15 +156,12 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
     if (htmlFromTab) {
       // 如果有从内容脚本传来的完整HTML内容，优先使用
       pageHtml = htmlFromTab;
-      console.log('Using HTML from tab, length:', htmlFromTab.length);
     } else if (contentFromTab) {
       // 否则如果有从内容脚本传来的文本内容，使用之
       pageHtml = contentFromTab;
-      console.log('Using content from tab, length:', contentFromTab.length);
     } else {
       // 否则使用获取到的HTML
       pageHtml = html;
-      console.log('Using fetched HTML, length:', html?.length || 0);
     }
     
     // 检查页面内容中是否包含关键字
@@ -174,13 +171,10 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         foundKeywords.push(keyword);
         
         // 尝试找到包含关键字的链接
-        console.log(`Searching for keyword "${keyword}" in HTML`);
         const linksWithKeyword = findLinksContainingKeyword(pageHtml, keyword, url);
-        console.log(`Found ${linksWithKeyword.length} links containing keyword "${keyword}"`);
         
         // 如果找到包含关键字的链接，使用该链接；否则使用页面URL
         const targetUrl = linksWithKeyword.length > 0 ? linksWithKeyword[0] : url;
-        console.log(`Target URL for keyword "${keyword}": ${targetUrl} (original: ${url})`);
         
         const post = {
           title: title || `Keyword "${keyword}" found on page`,
