@@ -38,6 +38,27 @@ document.addEventListener('DOMContentLoaded', function() {
       window.open(chrome.runtime.getURL('options.html'));
     }
   });
+  
+  // 打开最近匹配的URL
+  const openMatchedUrlButton = document.getElementById('openMatchedUrl');
+  openMatchedUrlButton.addEventListener('click', function() {
+    chrome.storage.local.get(['recentScanResults'], async function(result) {
+      const recentResults = result.recentScanResults || [];
+      if (recentResults.length > 0) {
+        // 找到最近包含匹配项的结果
+        const latestResultWithMatches = [...recentResults].reverse().find(r => r.foundKeywords.length > 0);
+        if (latestResultWithMatches) {
+          // 打开匹配的URL
+          await chrome.tabs.create({ url: latestResultWithMatches.url });
+          window.close(); // 关闭popup窗口
+        } else {
+          alert('没有找到匹配的URL');
+        }
+      } else {
+        alert('没有扫描结果');
+      }
+    });
+  });
 
   function updatePopupInfo() {
     // 获取监控状态
