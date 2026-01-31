@@ -53,6 +53,13 @@
     const pageText = getPageText();
     const pageHTML = getPageHTML();
     
+    console.log('Sending page data to background:', {
+      url: window.location.href,
+      title: document.title,
+      contentLength: pageText.length,
+      htmlLength: pageHTML.length
+    });
+    
     // 通知后台脚本检查当前页面
     chrome.runtime.sendMessage({
       action: 'pageChanged',
@@ -61,6 +68,7 @@
       content: pageText, // 发送页面文本内容供关键字检测
       html: pageHTML   // 发送页面HTML内容供链接解析
     }).catch(error => {
+      console.error('Error sending message to background:', error);
       // 忽略错误，可能是后台脚本尚未加载
     });
   }
