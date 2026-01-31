@@ -211,19 +211,18 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
 
 // 辅助函数：查找包含关键字的链接
 function findLinksContainingKeyword(html, keyword, baseUrl) {
-  // 使用正则表达式查找包含关键字的链接
+  // 使用正则表达式查找所有链接
   const linkRegex = /<a\s+[^>]*href\s*=\s*["']([^"']*)["'][^>]*>(.*?)<\/a>/gi;
   const links = [];
   let match;
-  
+
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
     const linkText = match[2];
-    
-    // 检查链接文本或href是否包含关键字
-    if (linkText.toLowerCase().includes(keyword.toLowerCase()) ||
-        href.toLowerCase().includes(keyword.toLowerCase())) {
-      
+
+    // 检查链接文本是否包含关键字（不检查href，只检查显示文本）
+    if (linkText.toLowerCase().includes(keyword.toLowerCase())) {
+
       // 处理相对链接
       try {
         const fullUrl = new URL(href, baseUrl).href;
@@ -234,7 +233,7 @@ function findLinksContainingKeyword(html, keyword, baseUrl) {
       }
     }
   }
-  
+
   return links;
 }
 
