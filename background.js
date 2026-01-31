@@ -169,9 +169,11 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         
         // 尝试找到包含关键字的链接
         const linksWithKeyword = findLinksContainingKeyword(pageHtml, keyword, url);
+        console.log(`Found ${linksWithKeyword.length} links containing keyword "${keyword}"`);
         
         // 如果找到包含关键字的链接，使用该链接；否则使用页面URL
         const targetUrl = linksWithKeyword.length > 0 ? linksWithKeyword[0] : url;
+        console.log(`Using target URL: ${targetUrl} (original URL: ${url})`);
         
         const post = {
           title: title || `Keyword "${keyword}" found on page`,
