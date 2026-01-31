@@ -23,6 +23,14 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch(message.action) {
     case 'pageChanged':
+      console.log('Received pageChanged message:', {
+        url: message.url,
+        title: message.title,
+        hasContent: !!message.content,
+        hasHTML: !!message.html,
+        contentLength: message.content?.length,
+        htmlLength: message.html?.length
+      });
       // 收到页面变化通知，检查内容
       checkPageContent(message.url, message.title, null, message.content, message.html);
       break;
