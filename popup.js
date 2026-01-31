@@ -42,16 +42,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // 打开最近匹配的URL
   const openMatchedUrlButton = document.getElementById('openMatchedUrl');
   openMatchedUrlButton.addEventListener('click', async function() {
-    const result = await chrome.storage.local.get(['recentScanResults', 'notificationCount']);
-    const recentResults = result.recentScanResults || [];
+    // 获取所有已通知的帖子，因为这是最新找到的包含关键字的链接
+    const result = await chrome.storage.local.get(['notifiedPosts', 'notificationCount']);
+    const notifiedPosts = result.notifiedPosts || {};
     let notificationCount = result.notificationCount || 0;
     
-    if (recentResults.length > 0) {
-      // 找到最近包含匹配项的结果
-      const latestResultWithMatches = [...recentResults].reverse().find(r => r.foundKeywords.length > 0);
-      if (latestResultWithMatches) {
+    // 将notifiedPosts转换为数组并按时间戳排序，找到最新的
+    const notifiedPostArray = Object.values(notifiedPosts);
+    if (notifiedPostArray.length > 0) {
+      // 按时间戳降序排列，获取最新的通知
+      const latestNotifiedPost = notifiedPostArray.sort((a, b) => b.timestamp - a.timestamp)[0];
+      
+      if (latestNotifiedPost) {
         // 打开匹配的URL
-        await chrome.tabs.create({ url: latestResultWithMatches.url });
+        await chrome.tabs.create({ url: latestNotifiedPost.url });
         
         // 减少通知计数，但不低于0
         if (notificationCount > 0) {
