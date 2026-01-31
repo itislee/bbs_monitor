@@ -290,8 +290,7 @@ async function notifyIfNew(post) {
   chrome.notifications.create({
     type: 'basic',
     title: `BBS监控: 关键词 "${post.keyword}" 匹配`,
-    message: `在 "${post.title}" 中发现关键词`,
-    iconUrl: chrome.runtime.getURL('icon.png') // 使用相对路径
+    message: `在 "${post.title}" 中发现关键词`
   }, (notificationId) => {
     if (chrome.runtime.lastError) {
       console.error('Error creating notification:', chrome.runtime.lastError);
