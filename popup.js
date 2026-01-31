@@ -41,23 +41,34 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 打开最近匹配的URL
   const openMatchedUrlButton = document.getElementById('openMatchedUrl');
-  openMatchedUrlButton.addEventListener('click', function() {
-    chrome.storage.local.get(['recentScanResults'], async function(result) {
-      const recentResults = result.recentScanResults || [];
-      if (recentResults.length > 0) {
-        // 找到最近包含匹配项的结果
-        const latestResultWithMatches = [...recentResults].reverse().find(r => r.foundKeywords.length > 0);
-        if (latestResultWithMatches) {
-          // 打开匹配的URL
-          await chrome.tabs.create({ url: latestResultWithMatches.url });
-          window.close(); // 关闭popup窗口
-        } else {
-          alert('没有找到匹配的URL');
+  openMatchedUrlButton.addEventListener('click', async function() {
+    const result = await chrome.storage.local.get(['recentScanResults', 'notificationCount']);
+    const recentResults = result.recentScanResults || [];
+    let notificationCount = result.notificationCount || 0;
+    
+    if (recentResults.length > 0) {
+      // 找到最近包含匹配项的结果
+      const latestResultWithMatches = [...recentResults].reverse().find(r => r.foundKeywords.length > 0);
+      if (latestResultWithMatches) {
+        // 打开匹配的URL
+        await chrome.tabs.create({ url: latestResultWithMatches.url });
+        
+        // 减少通知计数，但不低于0
+        if (notificationCount > 0) {
+          notificationCount--;
         }
+        await chrome.storage.local.set({ notificationCount: notificationCount });
+        
+        // 更新徽章
+        chrome.action.setBadgeText({ text: notificationCount.toString() });
+        
+        window.close(); // 关闭popup窗口
       } else {
-        alert('没有扫描结果');
+        alert('没有找到匹配的URL');
       }
-    });
+    } else {
+      alert('没有扫描结果');
+    }
   });
 
   function updatePopupInfo() {
