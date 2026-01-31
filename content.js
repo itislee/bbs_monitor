@@ -49,15 +49,17 @@
   }
   
   function notifyBackgroundCheck() {
-    // 获取页面文本内容
+    // 获取页面文本内容和HTML内容
     const pageText = getPageText();
+    const pageHTML = getPageHTML();
     
     // 通知后台脚本检查当前页面
     chrome.runtime.sendMessage({
       action: 'pageChanged',
       url: window.location.href,
       title: document.title,
-      content: pageText // 发送页面内容供后台分析
+      content: pageText, // 发送页面文本内容供关键字检测
+      html: pageHTML   // 发送页面HTML内容供链接解析
     }).catch(error => {
       // 忽略错误，可能是后台脚本尚未加载
     });
@@ -71,6 +73,16 @@
     scripts.forEach(script => script.remove());
     
     return clone.body.innerText || clone.body.textContent || '';
+  }
+  
+  // 获取页面HTML内容
+  function getPageHTML() {
+    // 移除脚本标签以避免安全问题，保留HTML结构用于链接解析
+    const clone = document.cloneNode(true);
+    const scripts = clone.querySelectorAll('script');
+    scripts.forEach(script => script.remove());
+    
+    return clone.documentElement.outerHTML;
   }
   
   // 防抖函数，避免过于频繁的调用

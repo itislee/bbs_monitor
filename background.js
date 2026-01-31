@@ -24,7 +24,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch(message.action) {
     case 'pageChanged':
       // 收到页面变化通知，检查内容
-      checkPageContent(message.url, message.title, null, message.content);
+      checkPageContent(message.url, message.title, null, message.content, message.html);
       break;
     case 'settingsUpdated':
       // 更新设置
@@ -124,11 +124,11 @@ async function checkSingleUrl(url) {
   }
 }
 
-async function checkPageContent(url, title = '', html = null, contentFromTab = null) {
+async function checkPageContent(url, title = '', html = null, contentFromTab = null, htmlFromTab = null) {
   if (!monitoringEnabled) return;
-
+  
   // 如果没有提供HTML，尝试从当前页面获取
-  if (!html && !contentFromTab) {
+  if (!html && !contentFromTab && !htmlFromTab) {
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -136,7 +136,7 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
           'User-Agent': 'Mozilla/5.0 (compatible; BBS Monitor Extension)'
         }
       });
-
+      
       if (!response.ok) return;
       html = await response.text();
     } catch (error) {
@@ -144,46 +144,49 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       return;
     }
   }
-
+  
   chrome.storage.sync.get({
     keywords: []
   }, async (items) => {
     const keywords = items.keywords;
     if (!keywords || keywords.length === 0) return;
-
+    
     let pageHtml = '';
-
-    if (contentFromTab) {
-      // 如果有从内容脚本传来的页面内容，优先使用
+    
+    if (htmlFromTab) {
+      // 如果有从内容脚本传来的完整HTML内容，优先使用
+      pageHtml = htmlFromTab;
+    } else if (contentFromTab) {
+      // 否则如果有从内容脚本传来的文本内容，使用之
       pageHtml = contentFromTab;
     } else {
       // 否则使用获取到的HTML
       pageHtml = html;
     }
-
+    
     // 检查页面内容中是否包含关键字
     const foundKeywords = [];
     for (const keyword of keywords) {
       if (pageHtml.toLowerCase().includes(keyword.toLowerCase())) {
         foundKeywords.push(keyword);
-
+        
         // 尝试找到包含关键字的链接
         const linksWithKeyword = findLinksContainingKeyword(pageHtml, keyword, url);
-
+        
         // 如果找到包含关键字的链接，使用该链接；否则使用页面URL
         const targetUrl = linksWithKeyword.length > 0 ? linksWithKeyword[0] : url;
-
+        
         const post = {
           title: title || `Keyword "${keyword}" found on page`,
           url: targetUrl,
           keyword: keyword,
           timestamp: Date.now()
         };
-
+        
         await notifyIfNew(post);
       }
     }
-
+    
     // 记录本次扫描结果
     if (foundKeywords.length > 0 || keywords.length > 0) {
       const scanResult = {
@@ -193,17 +196,17 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         totalKeywords: keywords.length,
         contentLength: pageHtml.length
       };
-
+      
       // 获取之前的扫描结果并添加新的结果
       const prevResults = await chrome.storage.local.get(['recentScanResults']);
-      const recentResults = prevResults.recentScanResults || [];
-
+      const recentResults = prevResults.recentScanResults || [];      
+      
       // 保留最近的10次扫描结果
       recentResults.push(scanResult);
       if (recentResults.length > 10) {
         recentResults.shift();
       }
-
+      
       await chrome.storage.local.set({ recentScanResults: recentResults });
     }
   });
@@ -219,10 +222,10 @@ function findLinksContainingKeyword(html, keyword, baseUrl) {
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
     const linkText = match[2];
-    
+
     // 检查链接文本是否包含关键字（不检查href，只检查显示文本）
     if (linkText.toLowerCase().includes(keyword.toLowerCase())) {
-      
+
       // 处理相对链接
       try {
         const fullUrl = new URL(href, baseUrl).href;
@@ -233,7 +236,7 @@ function findLinksContainingKeyword(html, keyword, baseUrl) {
       }
     }
   }
-  
+
   return links;
 }
 
