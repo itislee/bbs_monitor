@@ -73,10 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
       notificationCount.textContent = `通知数: ${notificationCountValue}`;
     });
     
-    // 获取监控URL数量
-    chrome.storage.sync.get(['monitoredUrls'], function(result) {
+    // 获取监控URL数量和检查间隔
+    chrome.storage.sync.get(['monitoredUrls', 'checkInterval'], function(result) {
       const urls = result.monitoredUrls || [];
-      monitoredUrlCount.textContent = `监控URL数: ${urls.length}`;
+      const checkInterval = result.checkInterval || 30; // 默认30秒
+      
+      monitoredUrlCount.textContent = `监控URL数: ${urls.length} | 检查间隔: ${checkInterval}秒`;
     });
   }
   
