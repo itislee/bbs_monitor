@@ -42,8 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // 打开结果页面
   const openResultsButton = document.getElementById('openResults');
   openResultsButton.addEventListener('click', function() {
-    // 打开结果页面
-    chrome.tabs.create({ url: chrome.runtime.getURL('results.html') });
+    // 以popup窗口形式打开结果页面
+    chrome.windows.create({
+      url: chrome.runtime.getURL('results.html'),
+      type: 'popup',
+      width: 500,
+      height: 600,
+      focused: true
+    });
     window.close(); // 关闭popup窗口
   });
 

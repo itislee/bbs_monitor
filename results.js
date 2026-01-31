@@ -28,10 +28,14 @@ function loadResults() {
       // 格式化时间
       const timeStr = new Date(post.timestamp).toLocaleString('zh-CN');
       
+      // 高亮关键字
+      const highlightedTitle = post.title.replace(
+        new RegExp(`(${post.keyword})`, 'gi'), 
+        '<span class="result-keyword">$1</span>'
+      );
+      
       resultItem.innerHTML = `
-        <div class="result-title">${post.title}</div>
-        <div class="result-url">${post.url}</div>
-        <div class="result-keyword">关键字: ${post.keyword}</div>
+        <div class="result-title">${highlightedTitle}</div>
         <div class="result-time">${timeStr}</div>
       `;
       
