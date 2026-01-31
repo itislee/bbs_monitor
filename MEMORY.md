@@ -18,3 +18,10 @@
 - Gateway port: 18789
 - Telegram bot token configured
 - Network settings adjusted for better compatibility with newer Node.js versions
+
+## Home Assistant Integration (Jan 31, 2026)
+- Complete integration solution created with HA manager class and command-line tools
+- Files: ha_manager.js, ha_tool.js, ha_config.json, HOME_ASSISTANT_INTEGRATION.md
+- Requires Long-Lived Access Token from HA and proper URL configuration
+- Supports device control, state retrieval, and service calls
+- Ready for use with exec commands in OpenClaw workflows
