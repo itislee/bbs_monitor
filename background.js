@@ -284,28 +284,15 @@ async function notifyIfNew(post) {
     notificationCount
   });
   
-  console.log(`Creating notification for keyword "${post.keyword}" on page:`, post.url);
+  console.log(`Found keyword "${post.keyword}" on page:`, post.url);
   
-  // 创建通知
-  chrome.notifications.create({
-    type: 'basic',
-    title: `BBS监控: 关键词 "${post.keyword}" 匹配`,
-    message: `在 "${post.title}" 中发现关键词`
-  }, (notificationId) => {
-    if (chrome.runtime.lastError) {
-      console.error('Error creating notification:', chrome.runtime.lastError);
-      // 即使通知创建失败，也要保存到已通知列表，避免重复尝试
-      chrome.storage.local.set({
-        [`notification_${Date.now()}_${Math.random()}`]: post.url
-      });
-    } else {
-      console.log('Notification created with ID:', notificationId);
-      // 保存通知ID与帖子URL的映射关系
-      chrome.storage.local.set({
-        [`notification_${notificationId}`]: post.url
-      });
-    }
-  });
+  // 尝试创建通知，但如果失败也不影响其他功能
+  try {
+    chrome.action.setBadgeText({ text: notificationCount.toString() });
+    chrome.action.setBadgeBackgroundColor({ color: '#FF0000' });
+  } catch (badgeError) {
+    console.error('Error updating badge:', badgeError);
+  }
 }
 
 // 监听通知点击事件
