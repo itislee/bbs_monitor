@@ -164,8 +164,11 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
     }
     
     // 检查页面内容中是否包含关键字
+    const foundKeywords = [];
     for (const keyword of keywords) {
       if (textContent.toLowerCase().includes(keyword.toLowerCase())) {
+        foundKeywords.push(keyword);
+        
         const post = {
           title: title || `Keyword "${keyword}" found on page`,
           url: url,
@@ -175,6 +178,29 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         
         await notifyIfNew(post);
       }
+    }
+    
+    // 记录本次扫描结果
+    if (foundKeywords.length > 0 || keywords.length > 0) {
+      const scanResult = {
+        url: url,
+        timestamp: Date.now(),
+        foundKeywords: foundKeywords,
+        totalKeywords: keywords.length,
+        contentLength: textContent.length
+      };
+      
+      // 获取之前的扫描结果并添加新的结果
+      const prevResults = await chrome.storage.local.get(['recentScanResults']);
+      const recentResults = prevResults.recentScanResults || [];
+      
+      // 保留最近的10次扫描结果
+      recentResults.push(scanResult);
+      if (recentResults.length > 10) {
+        recentResults.shift();
+      }
+      
+      await chrome.storage.local.set({ recentScanResults: recentResults });
     }
   });
 }

@@ -80,6 +80,20 @@ document.addEventListener('DOMContentLoaded', function() {
       
       monitoredUrlCount.textContent = `监控URL数: ${urls.length} | 检查间隔: ${checkInterval}秒`;
     });
+    
+    // 获取最近的检测结果
+    chrome.storage.local.get(['recentScanResults'], function(result) {
+      const recentResults = result.recentScanResults || [];
+      if (recentResults.length > 0) {
+        // 显示最近一次扫描的结果摘要
+        const latestResult = recentResults[recentResults.length - 1];
+        const resultElement = document.getElementById('scanResultInfo');
+        if (resultElement) {
+          resultElement.textContent = `上次扫描: ${latestResult.foundKeywords.length}个关键字匹配`;
+          resultElement.title = `匹配的关键字: ${latestResult.foundKeywords.join(', ')}`;
+        }
+      }
+    });
   }
   
   // 格式化日期时间的辅助函数
