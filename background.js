@@ -112,7 +112,7 @@ async function checkSingleUrl(url) {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; BBS Monitor Extension)'
+        'User-Agent': 'Mozilla/5.0 (compatible; Web Monitor Extension)'
       }
     });
 
@@ -141,7 +141,7 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; BBS Monitor Extension)'
+          'User-Agent': 'Mozilla/5.0 (compatible; Web Monitor Extension)'
         }
       });
 
@@ -305,8 +305,8 @@ function findLinksContainingKeyword(html, keyword, baseUrl) {
 function findMatchingPosts(content, keywords, baseUrl) {
   const posts = [];
 
-  // 根据常见BBS结构查找帖子
-  // 这里使用正则表达式匹配常见的帖子结构
+  // 根据常见网页结构查找内容
+  // 这里使用正则表达式匹配常见的内容结构
   const postPatterns = [
     /<a[^>]*href=['"]([^'"]*thread[^'"]*)['"][^>]*>([^<]*)<\/a>/gi, // 包含thread的链接
     /<a[^>]*href=['"]([^'"]*post[^'"]*)['"][^>]*>([^<]*)<\/a>/gi,  // 包含post的链接

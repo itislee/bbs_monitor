@@ -1,6 +1,6 @@
 // 内容脚本：负责检测页面变化
 (function() {
-  console.log('BBS Monitor content script loaded');
+  console.log('Web Monitor content script loaded');
   
   // 检查当前页面是否在监控列表中
   chrome.storage.sync.get(['monitoredUrls'], function(items) {
