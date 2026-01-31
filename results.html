@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>BBS Monitor - 匹配结果</title>
+  <title>Web Monitor - 匹配结果</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -49,12 +49,49 @@
       color: #999;
       padding: 30px 10px;
     }
+    /* 分页控件样式 */
+    .pagination-controls {
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      border-top: 1px solid #eee;
+    }
+    .pagination-button {
+      display: inline-block;
+      padding: 5px 10px;
+      margin: 0 5px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .pagination-button:hover {
+      background-color: #e0e0e0;
+    }
+    .pagination-button.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .pagination-info {
+      display: inline-block;
+      margin: 0 10px;
+      font-size: 14px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
-  <h1>BBS监控 - 匹配结果</h1>
+  <h1>Web监控 - 匹配结果</h1>
   <div id="results-container">
     <div class="empty-results">暂无匹配结果</div>
+  </div>
+  
+  <!-- 分页控件 -->
+  <div id="pagination-container" class="pagination-controls" style="display: none;">
+    <button id="prev-page" class="pagination-button" title="上一页">上一页</button>
+    <span id="pagination-info" class="pagination-info"></span>
+    <button id="next-page" class="pagination-button" title="下一页">下一页</button>
   </div>
 
   <script src="results.js"></script>
