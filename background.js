@@ -6,7 +6,7 @@ let checkInterval = 30000; // 默认30秒
 // 安装时设置默认值
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({
-    monitoredUrls: ['https://bbs.woa.com/view/3835'],
+    monitoredUrls: ['https://bbs.woa.com/forum/view/3835'],
     keywords: ['apple'],
     checkInterval: 30
   });
