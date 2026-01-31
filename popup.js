@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
     resultsPage.style.display = 'block';
     goBackButton.style.display = 'block';
     await loadResults();
+    
+    // 清空徽章数字
+    chrome.action.setBadgeText({ text: '' });
   });
 
   // 返回状态页面
