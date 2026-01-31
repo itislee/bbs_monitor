@@ -289,33 +289,15 @@ async function notifyIfNew(post) {
   // 创建通知
   chrome.notifications.create({
     type: 'basic',
-    iconUrl: 'icon.png', // 如果有的话
     title: `BBS监控: 关键词 "${post.keyword}" 匹配`,
     message: `在 "${post.title}" 中发现关键词`,
-    buttons: [
-      { title: "打开帖子" },
-      { title: "忽略" }
-    ],
-    requireInteraction: true
+    iconUrl: chrome.runtime.getURL('icon.png') // 使用相对路径
   }, (notificationId) => {
     if (chrome.runtime.lastError) {
       console.error('Error creating notification:', chrome.runtime.lastError);
-      
-      // 作为备选方案，尝试不带按钮的通知
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icon.png', // 如果有的话
-        title: `BBS监控: 关键词 "${post.keyword}" 匹配`,
-        message: `在 "${post.title}" 中发现关键词`
-      }, (fallbackNotificationId) => {
-        if (chrome.runtime.lastError) {
-          console.error('Fallback notification also failed:', chrome.runtime.lastError);
-        } else {
-          console.log('Fallback notification created with ID:', fallbackNotificationId);
-          chrome.storage.local.set({
-            [`notification_${fallbackNotificationId}`]: post.url
-          });
-        }
+      // 即使通知创建失败，也要保存到已通知列表，避免重复尝试
+      chrome.storage.local.set({
+        [`notification_${Date.now()}_${Math.random()}`]: post.url
       });
     } else {
       console.log('Notification created with ID:', notificationId);
