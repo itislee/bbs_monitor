@@ -22,13 +22,19 @@
   function startMonitoring() {
     // 初始化MutationObserver来检测DOM变化
     const observer = new MutationObserver(function(mutations) {
+      let shouldNotify = false;
+      
       mutations.forEach(function(mutation) {
-        // 当页面内容发生变化时，通知后台脚本检查
+        // 当页面内容发生变化时，标记需要检查
         if (mutation.type === 'childList' || mutation.type === 'characterData') {
-          // 避免过于频繁的通知
-          debounce(notifyBackgroundCheck, 2000)();
+          shouldNotify = true;
         }
       });
+      
+      if (shouldNotify) {
+        // 避免过于频繁的通知
+        debounce(notifyBackgroundCheck, 2000)();
+      }
     });
     
     // 开始观察整个文档
@@ -43,14 +49,28 @@
   }
   
   function notifyBackgroundCheck() {
+    // 获取页面文本内容
+    const pageText = getPageText();
+    
     // 通知后台脚本检查当前页面
     chrome.runtime.sendMessage({
       action: 'pageChanged',
       url: window.location.href,
-      title: document.title
+      title: document.title,
+      content: pageText // 发送页面内容供后台分析
     }).catch(error => {
       // 忽略错误，可能是后台脚本尚未加载
     });
+  }
+  
+  // 获取页面文本内容
+  function getPageText() {
+    // 移除脚本和样式标签，只获取纯文本内容
+    const clone = document.cloneNode(true);
+    const scripts = clone.querySelectorAll('script, style, noscript');
+    scripts.forEach(script => script.remove());
+    
+    return clone.body.innerText || clone.body.textContent || '';
   }
   
   // 防抖函数，避免过于频繁的调用

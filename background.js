@@ -24,7 +24,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch(message.action) {
     case 'pageChanged':
       // 收到页面变化通知，检查内容
-      checkPageContent(message.url, message.title);
+      checkPageContent(message.url, message.title, null, message.content);
       break;
     case 'settingsUpdated':
       // 更新设置
@@ -124,11 +124,11 @@ async function checkSingleUrl(url) {
   }
 }
 
-async function checkPageContent(url, title = '', html = null) {
+async function checkPageContent(url, title = '', html = null, contentFromTab = null) {
   if (!monitoringEnabled) return;
   
   // 如果没有提供HTML，尝试从当前页面获取
-  if (!html) {
+  if (!html && !contentFromTab) {
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -151,16 +151,30 @@ async function checkPageContent(url, title = '', html = null) {
     const keywords = items.keywords;
     if (!keywords || keywords.length === 0) return;
     
-    // 简单的HTML解析，提取文本内容
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const textContent = tempDiv.innerText || tempDiv.textContent || '';
+    let textContent = '';
     
-    // 查找包含关键字的帖子
-    const matchingPosts = findMatchingPosts(textContent, keywords, url);
+    if (contentFromTab) {
+      // 如果有从内容脚本传来的页面内容，优先使用
+      textContent = contentFromTab;
+    } else {
+      // 否则从HTML中提取文本内容
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      textContent = tempDiv.innerText || tempDiv.textContent || '';
+    }
     
-    for (const post of matchingPosts) {
-      await notifyIfNew(post);
+    // 检查页面内容中是否包含关键字
+    for (const keyword of keywords) {
+      if (textContent.toLowerCase().includes(keyword.toLowerCase())) {
+        const post = {
+          title: title || `Keyword "${keyword}" found on page`,
+          url: url,
+          keyword: keyword,
+          timestamp: Date.now()
+        };
+        
+        await notifyIfNew(post);
+      }
     }
   });
 }
