@@ -239,6 +239,7 @@ async function notifyIfNew(post) {
   
   // 检查是否已经通知过
   if (notifiedPosts[postId]) {
+    console.log(`Already notified about keyword "${post.keyword}" on page:`, post.url);
     return; // 已经通知过，不再重复
   }
   
@@ -258,6 +259,8 @@ async function notifyIfNew(post) {
     notificationCount
   });
   
+  console.log(`Creating notification for keyword "${post.keyword}" on page:`, post.url);
+  
   // 创建通知
   chrome.notifications.create({
     type: 'basic',
@@ -270,10 +273,15 @@ async function notifyIfNew(post) {
     ],
     requireInteraction: true
   }, (notificationId) => {
-    // 保存通知ID与帖子URL的映射关系
-    chrome.storage.local.set({
-      [`notification_${notificationId}`]: post.url
-    });
+    if (chrome.runtime.lastError) {
+      console.error('Error creating notification:', chrome.runtime.lastError);
+    } else {
+      console.log('Notification created with ID:', notificationId);
+      // 保存通知ID与帖子URL的映射关系
+      chrome.storage.local.set({
+        [`notification_${notificationId}`]: post.url
+      });
+    }
   });
 }
 
