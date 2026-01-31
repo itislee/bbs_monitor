@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // 获取DOM元素
   const toggleButton = document.getElementById('toggleMonitoring');
   const openOptionsButton = document.getElementById('openOptions');
+  const showResultsButton = document.getElementById('showResults');
+  const goBackButton = document.getElementById('goBack');
+  const statusPage = document.getElementById('statusPage');
+  const resultsPage = document.getElementById('resultsPage');
+  const resultsContainer = document.getElementById('resultsContainer');
   const statusText = document.getElementById('statusText');
   const lastCheckInfo = document.getElementById('lastCheckInfo');
   const notificationCount = document.getElementById('notificationCount');
@@ -10,6 +16,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 获取当前监控状态和相关信息
   updatePopupInfo();
+
+  // 切换到结果页面
+  showResultsButton.addEventListener('click', async function() {
+    statusPage.style.display = 'none';
+    resultsPage.style.display = 'block';
+    goBackButton.style.display = 'block';
+    await loadResults();
+  });
+
+  // 返回状态页面
+  goBackButton.addEventListener('click', function() {
+    statusPage.style.display = 'block';
+    resultsPage.style.display = 'none';
+    goBackButton.style.display = 'none';
+  });
 
   // 切换监控状态
   toggleButton.addEventListener('click', function() {
@@ -38,20 +59,53 @@ document.addEventListener('DOMContentLoaded', function() {
       window.open(chrome.runtime.getURL('options.html'));
     }
   });
-  
-  // 打开结果页面
-  const openResultsButton = document.getElementById('openResults');
-  openResultsButton.addEventListener('click', function() {
-    // 以popup窗口形式打开结果页面
-    chrome.windows.create({
-      url: chrome.runtime.getURL('results.html'),
-      type: 'popup',
-      width: 500,
-      height: 600,
-      focused: true
+
+  // 加载结果页面内容
+  async function loadResults() {
+    const result = await chrome.storage.local.get(['notifiedPosts']);
+    const notifiedPosts = result.notifiedPosts || {};
+    const container = resultsContainer;
+    
+    // 将对象转换为数组并按时间排序（最新的在前面）
+    const postsArray = Object.values(notifiedPosts);
+    postsArray.sort((a, b) => b.timestamp - a.timestamp);
+    
+    if (postsArray.length === 0) {
+      container.innerHTML = '<div class="empty-results">暂无匹配结果</div>';
+      return;
+    }
+    
+    // 清空容器
+    container.innerHTML = '';
+    
+    // 创建结果列表
+    postsArray.forEach(post => {
+      const resultItem = document.createElement('div');
+      resultItem.className = 'result-item';
+      
+      // 格式化时间
+      const timeStr = new Date(post.timestamp).toLocaleString('zh-CN');
+      
+      // 高亮关键字
+      const highlightedTitle = post.title.replace(
+        new RegExp(`(${post.keyword})`, 'gi'), 
+        '<span class="result-keyword">$1</span>'
+      );
+      
+      resultItem.innerHTML = `
+        <div class="result-title">${highlightedTitle}</div>
+        <div class="result-time">${timeStr}</div>
+      `;
+      
+      // 添加点击事件
+      resultItem.addEventListener('click', function() {
+        chrome.tabs.create({ url: post.url });
+        window.close(); // 关闭popup窗口
+      });
+      
+      container.appendChild(resultItem);
     });
-    window.close(); // 关闭popup窗口
-  });
+  }
 
   function updatePopupInfo() {
     // 获取监控状态
@@ -90,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 获取监控URL数量和检查间隔
     chrome.storage.sync.get(['monitoredUrls', 'checkInterval'], function(result) {
       const urls = result.monitoredUrls || [];
-      const checkInterval = result.checkInterval || 30; // 默认30秒
+      const checkInterval = result.checkInterval || 10; // 默认10秒
       
       monitoredUrlCount.textContent = `监控URL数: ${urls.length} | 检查间隔: ${checkInterval}秒`;
     });
@@ -124,4 +178,11 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 每5秒更新一次信息
   setInterval(updatePopupInfo, 5000);
+  
+  // 定期更新结果页面（仅当结果页面可见时）
+  setInterval(async function() {
+    if (resultsPage.style.display === 'block') {
+      await loadResults();
+    }
+  }, 5000);
 });

@@ -134,7 +134,7 @@ async function checkSingleUrl(url) {
 
 async function checkPageContent(url, title = '', html = null, contentFromTab = null, htmlFromTab = null) {
   if (!monitoringEnabled) return;
-
+  
   // 如果没有提供HTML，尝试从当前页面获取
   if (!html && !contentFromTab && !htmlFromTab) {
     try {
@@ -144,7 +144,7 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
           'User-Agent': 'Mozilla/5.0 (compatible; BBS Monitor Extension)'
         }
       });
-
+      
       if (!response.ok) return;
       html = await response.text();
     } catch (error) {
@@ -152,15 +152,15 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       return;
     }
   }
-
+  
   chrome.storage.sync.get({
     keywords: []
   }, async (items) => {
     const keywords = items.keywords;
     if (!keywords || keywords.length === 0) return;
-
+    
     let pageHtml = '';
-
+    
     if (htmlFromTab) {
       // 如果有从内容脚本传来的完整HTML内容，优先使用
       pageHtml = htmlFromTab;
@@ -171,31 +171,49 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       // 否则使用获取到的HTML
       pageHtml = html;
     }
-
+    
     // 检查页面内容中是否包含关键字
     const foundKeywords = [];
     for (const keyword of keywords) {
       if (pageHtml.toLowerCase().includes(keyword.toLowerCase())) {
         foundKeywords.push(keyword);
-
+        
         // 尝试找到包含关键字的链接
         const linksWithKeyword = findLinksContainingKeyword(pageHtml, keyword, url);
-
-        // 如果找到包含关键字的链接，使用该链接；否则使用页面URL
-        const targetUrl = linksWithKeyword.length > 0 ? linksWithKeyword[0] : url;
-
-        const post = {
-          title: title || `Keyword "${keyword}" found on page`,
-          url: targetUrl,
-          keyword: keyword,
-          timestamp: Date.now(),
-          source: htmlFromTab ? 'content_script' : 'background_check'
-        };
-
-        await notifyIfNew(post);
+        
+        if (linksWithKeyword.length > 0) {
+          // 对于每个找到的链接，提取其标题/文本
+          for (let i = 0; i < linksWithKeyword.length; i++) {
+            const targetUrl = linksWithKeyword[i];
+            
+            // 提取链接的文本内容作为标题
+            const linkTitle = extractLinkTitle(pageHtml, keyword, targetUrl);
+            
+            const post = {
+              title: linkTitle || title || `Keyword "${keyword}" found on page`,
+              url: targetUrl,
+              keyword: keyword,
+              timestamp: Date.now(),
+              source: htmlFromTab ? 'content_script' : 'background_check'
+            };
+            
+            await notifyIfNew(post);
+          }
+        } else {
+          // 如果没有找到包含关键字的链接，使用页面URL
+          const post = {
+            title: title || `Keyword "${keyword}" found on page`,
+            url: url,
+            keyword: keyword,
+            timestamp: Date.now(),
+            source: htmlFromTab ? 'content_script' : 'background_check'
+          };
+          
+          await notifyIfNew(post);
+        }
       }
     }
-
+    
     // 记录本次扫描结果
     if (foundKeywords.length > 0 || keywords.length > 0) {
       const scanResult = {
@@ -205,20 +223,55 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         totalKeywords: keywords.length,
         contentLength: pageHtml.length
       };
-
+      
       // 获取之前的扫描结果并添加新的结果
       const prevResults = await chrome.storage.local.get(['recentScanResults']);
-      const recentResults = prevResults.recentScanResults || [];
-
+      const recentResults = prevResults.recentScanResults || [];      
+      
       // 保留最近的10次扫描结果
       recentResults.push(scanResult);
       if (recentResults.length > 10) {
         recentResults.shift();
       }
-
+      
       await chrome.storage.local.set({ recentScanResults: recentResults });
     }
   });
+}
+
+// 辅助函数：提取链接的标题/文本内容
+function extractLinkTitle(html, keyword, targetUrl) {
+  // 使用正则表达式查找目标URL对应的链接
+  const linkRegex = /<a\s+[^>]*href\s*=\s*["']([^"']*)["'][^>]*>(.*?)<\/a>/gi;
+  let match;
+  
+  while ((match = linkRegex.exec(html)) !== null) {
+    const href = match[1];
+    const linkText = match[2];
+    
+    // 检查是否是目标URL
+    try {
+      // 获取基准URL用于解析相对链接
+      let baseUrl = targetUrl;
+      if (!baseUrl.startsWith('http')) {
+        // 如果targetUrl不是完整URL，使用一个默认的
+        baseUrl = 'https://example.com';
+      }
+      
+      const fullUrl = new URL(href, baseUrl).href;
+      const targetFullUrl = new URL(targetUrl, baseUrl).href;
+      
+      if (fullUrl === targetFullUrl && linkText.toLowerCase().includes(keyword.toLowerCase())) {
+        // 返回链接文本，去除HTML标签
+        return linkText.replace(/<[^>]*>/g, '').trim();
+      }
+    } catch (e) {
+      // 如果URL无效，继续下一个
+      continue;
+    }
+  }
+  
+  return null;
 }
 
 // 辅助函数：查找包含关键字的链接
@@ -303,16 +356,16 @@ async function notifyIfNew(post) {
   const result = await chrome.storage.local.get(['notifiedPosts', 'notificationCount']);
   const notifiedPosts = result.notifiedPosts || {};
   let notificationCount = result.notificationCount || 0;
-  
+
   // 生成帖子的唯一标识符
   const postId = `${post.url}-${post.keyword}`;
-  
+
   // 检查是否已经通知过
   if (notifiedPosts[postId]) {
     console.log(`Already notified about keyword "${post.keyword}" on page:`, post.url);
     return; // 已经通知过，不再重复
   }
-  
+
   // 标记为已通知
   notifiedPosts[postId] = {
     timestamp: Date.now(),
@@ -320,17 +373,17 @@ async function notifyIfNew(post) {
     url: post.url,
     keyword: post.keyword
   };
-  
+
   // 增加通知计数
   notificationCount++;
-  
-  await chrome.storage.local.set({ 
+
+  await chrome.storage.local.set({
     notifiedPosts,
     notificationCount
   });
-  
+
   console.log(`Found keyword "${post.keyword}" on page:`, post.url);
-  
+
   // 尝试创建通知，但如果失败也不影响其他功能
   try {
     chrome.action.setBadgeText({ text: notificationCount.toString() });

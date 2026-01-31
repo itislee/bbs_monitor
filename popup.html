@@ -32,6 +32,52 @@
       background-color: #f8f9fa;
       border: 1px solid #b8c2cc;
     }
+    .results-section {
+      display: none;
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+      border: 1px solid #b8c2cc;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .result-item {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .result-item:last-child {
+      border-bottom: none;
+    }
+    .result-item:hover {
+      background-color: #e9ecef;
+    }
+    .result-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 3px;
+      line-height: 1.3;
+      font-size: 14px;
+    }
+    .result-keyword {
+      display: inline-block;
+      background-color: #ffeb3b;
+      padding: 1px 3px;
+      border-radius: 2px;
+      font-size: 11px;
+      margin-right: 5px;
+    }
+    .result-time {
+      font-size: 11px;
+      color: #666;
+    }
+    .empty-results {
+      text-align: center;
+      color: #999;
+      padding: 20px 10px;
+    }
     button {
       width: 100%;
       padding: 10px;
@@ -58,6 +104,12 @@
     .btn-options:hover {
       background-color: #5a6268;
     }
+    .btn-back {
+      background-color: #6f42c1;
+    }
+    .btn-back:hover {
+      background-color: #5a32a3;
+    }
     .last-check-info {
       font-size: 12px;
       margin-top: 5px;
@@ -66,23 +118,38 @@
   </style>
 </head>
 <body>
-  <h3>BBS Monitor</h3>
-  
-  <div id="statusSection" class="section status-section">
-    <strong>监控状态:</strong> <span id="statusText">未知</span><br>
-    <div id="lastCheckInfo" class="last-check-info">上次检查: 未开始</div>
+  <!-- 状态页面 -->
+  <div id="statusPage">
+    <h3>BBS Monitor</h3>
+    
+    <div id="statusSection" class="section status-section">
+      <strong>监控状态:</strong> <span id="statusText">未知</span><br>
+      <div id="lastCheckInfo" class="last-check-info">上次检查: 未开始</div>
+    </div>
+    
+    <div id="infoSection" class="section info-section">
+      <strong>统计信息:</strong><br>
+      <span id="notificationCount">通知数: 0</span><br>
+      <span id="monitoredUrlCount">监控URL数: 0</span><br>
+      <span id="scanResultInfo">上次扫描: 无结果</span>
+    </div>
+    
+    <button id="toggleMonitoring">切换监控</button>
+    <button id="openOptions" class="btn-options">选项设置</button>
+    <button id="showResults" class="btn-options">匹配结果</button>
   </div>
   
-  <div id="infoSection" class="section info-section">
-    <strong>统计信息:</strong><br>
-    <span id="notificationCount">通知数: 0</span><br>
-    <span id="monitoredUrlCount">监控URL数: 0</span><br>
-    <span id="scanResultInfo">上次扫描: 无结果</span>
+  <!-- 结果页面 -->
+  <div id="resultsPage" class="results-section">
+    <h3>匹配结果</h3>
+    <div id="resultsContainer">
+      <div class="empty-results">暂无匹配结果</div>
+    </div>
   </div>
   
-  <button id="toggleMonitoring">切换监控</button>
-  <button id="openOptions" class="btn-options">选项设置</button>
-  <button id="openResults" class="btn-options">匹配结果</button>
+  <div id="controlsBottom">
+    <button id="goBack" class="btn-back" style="display:none;">返回状态</button>
+  </div>
   
   <script src="popup.js"></script>
 </body>
