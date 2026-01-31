@@ -8,7 +8,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({
     monitoredUrls: ['https://bbs.woa.com/forum/view/3835'],
     keywords: ['apple'],
-    checkInterval: 30
+    checkInterval: 10
   });
   
   chrome.storage.local.set({
@@ -41,6 +41,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // 初始化
 init();
 
+// 监听扩展图标点击事件
+chrome.action.onClicked.addListener(() => {
+  // 打开选项页面或显示最近匹配的URL
+  chrome.storage.local.get(['recentScanResults'], async (result) => {
+    const recentResults = result.recentScanResults || [];
+    if (recentResults.length > 0) {
+      // 找到最近包含匹配项的结果
+      const latestResultWithMatches = recentResults.reverse().find(r => r.foundKeywords.length > 0);
+      if (latestResultWithMatches) {
+        // 打开匹配的URL
+        await chrome.tabs.create({ url: latestResultWithMatches.url });
+      } else {
+        // 如果没有匹配结果，打开选项页面
+        if (chrome.runtime.openOptionsPage) {
+          chrome.runtime.openOptionsPage();
+        }
+      }
+    } else {
+      // 如果没有扫描结果，打开选项页面
+      if (chrome.runtime.openOptionsPage) {
+        chrome.runtime.openOptionsPage();
+      }
+    }
+  });
+});
+
 function init() {
   // 获取初始设置
   updateSettings();
@@ -59,7 +85,7 @@ function updateSettings() {
   chrome.storage.sync.get({
     monitoredUrls: [],
     keywords: [],
-    checkInterval: 30
+    checkInterval: 10
   }, (items) => {
     // 更新检查间隔
     if (items.checkInterval && items.checkInterval !== checkInterval / 1000) {
