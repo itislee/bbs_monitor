@@ -62,7 +62,7 @@ function updateSettings() {
     checkInterval: 30
   }, (items) => {
     // 更新检查间隔
-    if (items.checkInterval !== checkInterval / 1000) {
+    if (items.checkInterval && items.checkInterval !== checkInterval / 1000) {
       checkInterval = items.checkInterval * 1000;
       updateMonitoringState(); // 重新设置定时器
     }
