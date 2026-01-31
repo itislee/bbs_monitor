@@ -4,30 +4,38 @@
   <meta charset="UTF-8">
   <style>
     body {
-      width: 300px;
+      width: 320px;
       padding: 15px;
       font-family: Arial, sans-serif;
     }
     h3 {
       margin-top: 0;
       color: #333;
+      text-align: center;
     }
-    .status {
+    .section {
       margin: 10px 0;
       padding: 8px;
       border-radius: 4px;
     }
-    .enabled {
-      background-color: #d4edda;
-      color: #155724;
+    .status-section {
+      background-color: #f0f8ff;
+      border: 1px solid #cce5ff;
     }
-    .disabled {
-      background-color: #f8d7da;
-      color: #721c24;
+    .status-enabled {
+      color: #004085;
+    }
+    .status-disabled {
+      color: #856404;
+    }
+    .info-section {
+      background-color: #f8f9fa;
+      border: 1px solid #b8c2cc;
     }
     button {
       width: 100%;
       padding: 10px;
+      margin: 5px 0;
       background-color: #007bff;
       color: white;
       border: none;
@@ -44,12 +52,36 @@
     .toggle-off {
       background-color: #dc3545;
     }
+    .btn-options {
+      background-color: #6c757d;
+    }
+    .btn-options:hover {
+      background-color: #5a6268;
+    }
+    .last-check-info {
+      font-size: 12px;
+      margin-top: 5px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
   <h3>BBS Monitor</h3>
-  <div id="status" class="status">监控状态: <span id="statusText">未知</span></div>
+  
+  <div id="statusSection" class="section status-section">
+    <strong>监控状态:</strong> <span id="statusText">未知</span><br>
+    <div id="lastCheckInfo" class="last-check-info">上次检查: 未开始</div>
+  </div>
+  
+  <div id="infoSection" class="section info-section">
+    <strong>统计信息:</strong><br>
+    <span id="notificationCount">通知数: 0</span><br>
+    <span id="monitoredUrlCount">监控URL数: 0</span>
+  </div>
+  
   <button id="toggleMonitoring">切换监控</button>
+  <button id="openOptions" class="btn-options">选项设置</button>
+  
   <script src="popup.js"></script>
 </body>
 </html>

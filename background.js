@@ -13,7 +13,9 @@ chrome.runtime.onInstalled.addListener(() => {
   
   chrome.storage.local.set({
     notifiedPosts: {},
-    monitoringEnabled: true
+    monitoringEnabled: true,
+    lastCheckTime: null,
+    notificationCount: 0
   });
 });
 
@@ -114,6 +116,11 @@ async function checkSingleUrl(url) {
     await checkPageContent(url, '', html);
   } catch (error) {
     console.error('Failed to fetch URL:', url, error.message);
+  } finally {
+    // 更新最后检查时间
+    await chrome.storage.local.set({
+      lastCheckTime: Date.now()
+    });
   }
 }
 
@@ -209,8 +216,9 @@ function findMatchingPosts(content, keywords, baseUrl) {
 
 async function notifyIfNew(post) {
   // 获取已通知的帖子列表
-  const result = await chrome.storage.local.get(['notifiedPosts']);
+  const result = await chrome.storage.local.get(['notifiedPosts', 'notificationCount']);
   const notifiedPosts = result.notifiedPosts || {};
+  let notificationCount = result.notificationCount || 0;
   
   // 生成帖子的唯一标识符
   const postId = `${post.url}-${post.keyword}`;
@@ -228,7 +236,13 @@ async function notifyIfNew(post) {
     keyword: post.keyword
   };
   
-  await chrome.storage.local.set({ notifiedPosts });
+  // 增加通知计数
+  notificationCount++;
+  
+  await chrome.storage.local.set({ 
+    notifiedPosts,
+    notificationCount
+  });
   
   // 创建通知
   chrome.notifications.create({
