@@ -6,11 +6,11 @@ let checkInterval = 30000; // 默认30秒
 // 安装时设置默认值
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({
-    monitoredUrls: ['https://bbs.woa.com/forum/view/3835'],
+    monitoredUrls: [],
     keywords: ['apple'],
     checkInterval: 10
   });
-
+  
   chrome.storage.local.set({
     notifiedPosts: {},
     monitoringEnabled: true,
@@ -134,7 +134,7 @@ async function checkSingleUrl(url) {
 
 async function checkPageContent(url, title = '', html = null, contentFromTab = null, htmlFromTab = null) {
   if (!monitoringEnabled) return;
-  
+
   // 如果没有提供HTML，尝试从当前页面获取
   if (!html && !contentFromTab && !htmlFromTab) {
     try {
@@ -144,7 +144,7 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
           'User-Agent': 'Mozilla/5.0 (compatible; BBS Monitor Extension)'
         }
       });
-      
+
       if (!response.ok) return;
       html = await response.text();
     } catch (error) {
@@ -152,15 +152,15 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       return;
     }
   }
-  
+
   chrome.storage.sync.get({
     keywords: []
   }, async (items) => {
     const keywords = items.keywords;
     if (!keywords || keywords.length === 0) return;
-    
+
     let pageHtml = '';
-    
+
     if (htmlFromTab) {
       // 如果有从内容脚本传来的完整HTML内容，优先使用
       pageHtml = htmlFromTab;
@@ -171,24 +171,24 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
       // 否则使用获取到的HTML
       pageHtml = html;
     }
-    
+
     // 检查页面内容中是否包含关键字
     const foundKeywords = [];
     for (const keyword of keywords) {
       if (pageHtml.toLowerCase().includes(keyword.toLowerCase())) {
         foundKeywords.push(keyword);
-        
+
         // 尝试找到包含关键字的链接
         const linksWithKeyword = findLinksContainingKeyword(pageHtml, keyword, url);
-        
+
         if (linksWithKeyword.length > 0) {
           // 对于每个找到的链接，提取其标题/文本
           for (let i = 0; i < linksWithKeyword.length; i++) {
             const targetUrl = linksWithKeyword[i];
-            
+
             // 提取链接的文本内容作为标题
             const linkTitle = extractLinkTitle(pageHtml, keyword, targetUrl);
-            
+
             const post = {
               title: linkTitle || title || `Keyword "${keyword}" found on page`,
               url: targetUrl,
@@ -196,7 +196,7 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
               timestamp: Date.now(),
               source: htmlFromTab ? 'content_script' : 'background_check'
             };
-            
+
             await notifyIfNew(post);
           }
         } else {
@@ -208,12 +208,12 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
             timestamp: Date.now(),
             source: htmlFromTab ? 'content_script' : 'background_check'
           };
-          
+
           await notifyIfNew(post);
         }
       }
     }
-    
+
     // 记录本次扫描结果
     if (foundKeywords.length > 0 || keywords.length > 0) {
       const scanResult = {
@@ -223,17 +223,17 @@ async function checkPageContent(url, title = '', html = null, contentFromTab = n
         totalKeywords: keywords.length,
         contentLength: pageHtml.length
       };
-      
+
       // 获取之前的扫描结果并添加新的结果
       const prevResults = await chrome.storage.local.get(['recentScanResults']);
-      const recentResults = prevResults.recentScanResults || [];      
-      
+      const recentResults = prevResults.recentScanResults || [];
+
       // 保留最近的10次扫描结果
       recentResults.push(scanResult);
       if (recentResults.length > 10) {
         recentResults.shift();
       }
-      
+
       await chrome.storage.local.set({ recentScanResults: recentResults });
     }
   });
@@ -244,11 +244,11 @@ function extractLinkTitle(html, keyword, targetUrl) {
   // 使用正则表达式查找目标URL对应的链接
   const linkRegex = /<a\s+[^>]*href\s*=\s*["']([^"']*)["'][^>]*>(.*?)<\/a>/gi;
   let match;
-  
+
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
     const linkText = match[2];
-    
+
     // 检查是否是目标URL
     try {
       // 获取基准URL用于解析相对链接
@@ -257,10 +257,10 @@ function extractLinkTitle(html, keyword, targetUrl) {
         // 如果targetUrl不是完整URL，使用一个默认的
         baseUrl = 'https://example.com';
       }
-      
+
       const fullUrl = new URL(href, baseUrl).href;
       const targetFullUrl = new URL(targetUrl, baseUrl).href;
-      
+
       if (fullUrl === targetFullUrl && linkText.toLowerCase().includes(keyword.toLowerCase())) {
         // 返回链接文本，去除HTML标签
         return linkText.replace(/<[^>]*>/g, '').trim();
@@ -270,7 +270,7 @@ function extractLinkTitle(html, keyword, targetUrl) {
       continue;
     }
   }
-  
+
   return null;
 }
 
