@@ -1,2 +1,0 @@
-This is a placeholder for icon16.png. 
-You need to add an actual 16x16 pixel PNG image file for the extension icon.

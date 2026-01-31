@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "BBS Monitor",
+  "name": "Web Monitor",
   "version": "1.0.0",
-  "description": "Monitor BBS forums for new posts containing specified keywords",
+  "description": "Monitor web pages for new content containing specified keywords",
   "permissions": [
     "storage",
     "notifications"
@@ -23,12 +23,17 @@
   "options_page": "options.html",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "BBS Monitor Options"
+    "default_title": "Web Monitor Options"
   },
   "web_accessible_resources": [
     {
       "resources": ["results.html", "results.js"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
 }
