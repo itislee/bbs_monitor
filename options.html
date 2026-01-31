@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BBS Monitor Options</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      height: 80px;
+      resize: vertical;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+      display: block;
+    }
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>BBS Monitor 设置</h1>
+  <div class="form-group">
+    <label for="monitoredUrls">监控的URL (每行一个):</label>
+    <textarea id="monitoredUrls" placeholder="https://example.com/forum&#10;https://another-forum.com/bbs"></textarea>
+  </div>
+  <div class="form-group">
+    <label for="keywords">监控关键字 (用逗号分隔):</label>
+    <input type="text" id="keywords" placeholder="关键词1,关键词2,关键词3">
+  </div>
+  <div class="form-group">
+    <label for="checkInterval">检查间隔 (秒):</label>
+    <input type="number" id="checkInterval" value="30" min="5">
+  </div>
+  <button id="save">保存设置</button>
+  <div id="status" class="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>
